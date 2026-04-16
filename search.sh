@@ -6,6 +6,16 @@
 LOG_DIR="$HOME/Library/Logs/ClashX Meta"
 KEYWORD="$1"
 
+# Helper function to output a JSON item
+output_item() {
+    local title="$1"
+    local subtitle="$2"
+    printf '    {\n'
+    printf '        "subtitle": "%s",\n' "$(echo "$subtitle" | sed 's/"/\\"/g')"
+    printf '        "title": "%s"\n' "$(echo "$title" | sed 's/"/\\"/g')"
+    printf '    }'
+}
+
 # Validate input
 if [[ -z "$KEYWORD" ]]; then
     echo '{"items": []}'
@@ -35,37 +45,39 @@ matches=$(echo "$matches" | awk '{print NR, $0}' | sort -rn | cut -d' ' -f2-)
 # Start JSON output
 echo '{"items": ['
 
-# Process each matching line
-first=true
-while IFS= read -r line; do
-    # Extract date (format: DD/MM/YYYY, HH:MM:SS.mmm)
-    date=$(echo "$line" | grep -oE '^[0-9]{2}/[0-9]{2}/[0-9]{4}, [0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}')
-    
-    # Extract everything after "-->"
-    rule=$(echo "$line" | sed 's/.*--> //')
-    
-    # Format the rule display:
-    # Remove "match", replace "using" with "➡️", add emoji around RuleSet
-    rule=$(echo "$rule" | sed 's/:[^ ]* match /🎯/g' | sed 's/ using /➡️/g' )
-    
-    # Skip if extraction failed
-    if [[ -z "$date" ]] || [[ -z "$rule" ]]; then
-        continue
-    fi
-    
-    # Add comma before item (except for the first one)
-    if [[ "$first" == false ]]; then
-        echo ","
-    fi
-    first=false
-    
-    # Output JSON item with proper escaping
-    printf '    {\n'
-    printf '        "subtitle": "%s",\n' "$(echo "$rule" | sed 's/"/\\"/g')"
-    printf '        "title": "%s"\n' "$(echo "$date" | sed 's/"/\\"/g')"
-    printf '    }'
-done <<< "$matches"
+# Check if there are any matches
+if [[ -z "$matches" ]]; then
+    # No results found - show helpful message
+    output_item "No results for '$KEYWORD'" "Try to input another word"
+else
+    # Process each matching line
+    first=true
+    while IFS= read -r line; do
+        # Extract date (format: DD/MM/YYYY, HH:MM:SS.mmm)
+        date=$(echo "$line" | grep -oE '^[0-9]{2}/[0-9]{2}/[0-9]{4}, [0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}')
+
+        # Extract everything after "-->"
+        rule=$(echo "$line" | sed 's/.*--> //')
+
+        # Format the rule display:
+        # Remove "match", replace "using" with "➡️", add emoji around RuleSet
+        rule=$(echo "$rule" | sed 's/:[^ ]* match /🎯/g' | sed 's/ using /➡️/g' )
+
+        # Skip if extraction failed
+        if [[ -z "$date" ]] || [[ -z "$rule" ]]; then
+            continue
+        fi
+
+        # Add comma before item (except for the first one)
+        if [[ "$first" == false ]]; then
+            echo ","
+        fi
+        first=false
+
+        output_item "$date" "$rule"
+    done <<< "$matches"
+    echo ""
+fi
 
 # Close JSON output
-echo ""
 echo "]}"
