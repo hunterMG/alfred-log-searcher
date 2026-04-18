@@ -10,8 +10,10 @@ KEYWORD="$1"
 output_item() {
     local title="$1"
     local subtitle="$2"
+    local arg="$3"
     printf '    {\n'
     printf '        "subtitle": "%s",\n' "$(echo "$subtitle" | sed 's/"/\\"/g')"
+    printf '        "arg": "%s",\n' "$(echo "$arg" | sed 's/"/\\"/g')"
     printf '        "title": "%s"\n' "$(echo "$title" | sed 's/"/\\"/g')"
     printf '    }'
 }
@@ -48,7 +50,7 @@ echo '{"items": ['
 # Check if there are any matches
 if [[ -z "$matches" ]]; then
     # No results found - show helpful message
-    output_item "No results for '$KEYWORD'" "Try to input another word"
+    output_item "No results for '$KEYWORD'" "Try to input another word" ""
 else
     # Process each matching line
     first=true
@@ -59,12 +61,15 @@ else
         # Extract everything after "-->"
         rule=$(echo "$line" | sed 's/.*--> //')
 
+        # Extract domain name (before the first colon and port)
+        domain=$(echo "$rule" | grep -oE '^[^:]+')
+
         # Format the rule display:
         # Remove "match", replace "using" with "➡️", add emoji around RuleSet
         rule=$(echo "$rule" | sed 's/:[^ ]* match /🎯/g' | sed 's/ using /➡️/g' )
 
         # Skip if extraction failed
-        if [[ -z "$date" ]] || [[ -z "$rule" ]]; then
+        if [[ -z "$date" ]] || [[ -z "$rule" ]] || [[ -z "$domain" ]]; then
             continue
         fi
 
@@ -74,7 +79,7 @@ else
         fi
         first=false
 
-        output_item "$date" "$rule"
+        output_item "$date" "$rule" "$domain"
     done <<< "$matches"
     echo ""
 fi
