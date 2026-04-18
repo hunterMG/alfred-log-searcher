@@ -3,7 +3,7 @@
 # Script Filter for Alfred Workflow - Search ClashX Meta logs
 # Receives a search keyword as input and returns matching log entries as JSON items
 
-LOG_DIR="$HOME/Library/Logs/ClashX Meta"
+LOG_DIR="$logDir"
 KEYWORD="$1"
 
 # Helper function to output a JSON item
