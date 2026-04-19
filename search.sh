@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script Filter for Alfred Workflow - Search ClashX Meta logs
+# Script Filter for Alfred Workflow - Search logs
 # Receives a search keyword as input and returns matching log entries as JSON items
 
 LOG_DIR="$logDir"
@@ -43,6 +43,8 @@ fi
 matches=$(grep -i "$KEYWORD" "$latest_log" | tail -5)
 # reverse the order to show the most recent first, do not use tac
 matches=$(echo "$matches" | awk '{print NR, $0}' | sort -rn | cut -d' ' -f2-)
+# A match example line format:
+# 01/01/2026, 23:33:33.333  [info] AppDelegate.swift didGetLog(log:level:) [TCP] 127.0.0.1:54529(Google Chrome Helper) --> example.com:443 match DomainSuffix(example.com) using Proxy-group-1[Marley-node-1]
 
 # Start JSON output
 echo '{"items": ['
